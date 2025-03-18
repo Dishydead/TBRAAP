@@ -1,0 +1,43 @@
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.optimize import curve_fit
+
+# Données
+angles = np.array([0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180])
+intensities = np.array([198.1, 188.5, 170.8, 145.4, 116.3, 82.2, 51.6, 26.6, 9.3, 2.3, 6.9, 21.8, 44.8, 73.8, 109.2, 144.1, 171.8, 191.8, 201])
+
+# Définir une fonction polynomiale pour l'ajustement (par exemple degré 4)
+def poly4(x, a, b, c, d, e):
+    return a * x**4 + b * x**3 + c * x**2 + d * x + e
+
+# Ajustement de la courbe
+params, _ = curve_fit(poly4, angles, intensities)
+
+# Générer des points pour la courbe ajustée
+angles_fit = np.linspace(0, 180, 500)  # Plus de points pour une courbe lisse
+intensities_fit = poly4(angles_fit, *params)
+
+# Extraire les coefficients
+a, b, c, d, e = params
+
+# Afficher l'équation
+print(f"Équation de la courbe ajustée : I(θ) = {a:.3e}θ⁴ + {b:.3e}θ³ + {c:.3e}θ² + {d:.3e}θ + {e:.3e}")
+
+
+# Création du graphique
+plt.figure(figsize=(10, 6))
+
+# Tracer les données d'origine
+plt.scatter(angles, intensities, color='red', label='Données expérimentales', zorder=5)
+
+# Tracer la courbe ajustée
+plt.plot(angles_fit, intensities_fit, color='blue', linestyle='-', label='Courbe ajustée (degré 4)')
+
+# Personnalisation
+plt.xlabel("Angle (°)", fontsize=12)
+plt.ylabel("Intensité [µA]", fontsize=12)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+plt.legend(fontsize=10)
+plt.tight_layout()
+plt.show()
