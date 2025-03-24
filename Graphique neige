@@ -1,0 +1,74 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import make_interp_spline
+
+# Charger le fichier Excel
+file_path = "données.xlsx"
+xls = pd.ExcelFile(file_path)
+
+# Charger les données de la première feuille
+df = pd.read_excel(xls, sheet_name="Feuil1")
+
+# Définir les épaisseurs de neige (x-axis)
+epaisseurs = np.array([5, 10, 15])  # cm
+
+# Extraire les valeurs de I0 et IR
+I0_values = df.iloc[1:11, 0:3].astype(float).values  # Intensités incidentes
+IR_values = df.iloc[12:22, 0:3].astype(float).values  # Intensités réfléchies
+
+# Moyennes et incertitudes (écart-type sur 10 mesures)
+I0_moy = np.mean(I0_values, axis=0)
+I0_std = np.std(I0_values, axis=0)
+
+IR_moy = np.mean(IR_values, axis=0)
+IR_std = np.std(IR_values, axis=0)
+
+# Calcul de la réflectance R = IR / I0
+R = IR_moy / I0_moy
+R_std = R * np.sqrt((IR_std / IR_moy) ** 2 + (I0_std / I0_moy) ** 2)  # Propagation d'erreur
+
+# Calcul de l'indice de réfraction n = (1 + sqrt(R)) / (1 - sqrt(R))
+sqrt_R = np.sqrt(R)
+n = (1 + sqrt_R) / (1 - sqrt_R)
+n_std = (1 / (1 - sqrt_R) ** 2) * (0.5 * R_std / sqrt_R)  # Propagation d'erreur
+
+# Graphique 1 : I0 et IR moyennés
+plt.figure(figsize=(8, 4))
+plt.errorbar(epaisseurs, I0_moy, yerr=I0_std, fmt='o-', label='I0 moyen', capsize=5)
+plt.errorbar(epaisseurs, IR_moy, yerr=IR_std, fmt='s-', label='IR moyen', capsize=5)
+plt.xlabel("Épaisseur de neige (cm)")
+plt.ylabel("Intensité (lux)")
+plt.legend()
+plt.grid(False)
+plt.title("Intensités incidentes et réfléchies moyennées", loc='center', pad=20)
+plt.show()
+
+# Graphique 2 : Réflectance R
+plt.figure(figsize=(8, 4))
+plt.errorbar(epaisseurs, R, yerr=R_std, fmt='o-', label='Réflectance R', capsize=5)
+plt.xlabel("Épaisseur de neige (cm)")
+plt.ylabel("Réflectance")
+plt.legend()
+plt.grid(False)
+plt.title("Réflectance en fonction de l'épaisseur", loc='center', pad=20)
+plt.show()
+
+# Graphique 3 : Indice de réfraction n
+x_smooth = np.linspace(epaisseurs.min(), epaisseurs.max(), 100)
+spline = make_interp_spline(epaisseurs, n, k=2)
+n_smooth = spline(x_smooth)
+
+plt.figure(figsize=(8, 4))
+plt.errorbar(epaisseurs, n, yerr=n_std, fmt='o-', label='Indice de réfraction', capsize=5)
+plt.plot(x_smooth, n_smooth, label='Courbe lissée', linestyle='--')
+plt.xlabel("Épaisseur de neige (cm)")
+plt.ylabel("Indice de réfraction")
+plt.legend()
+plt.grid(False)
+plt.title("Indice de réfraction en fonction de l'épaisseur", loc='center', pad=20)
+plt.show()
+
+
+print(n)
+print(n_std)
